@@ -1,0 +1,30 @@
+{
+  "name": "tcp-ping-pong",
+  "version": "0.0.0",
+  "description": "Programmable KeepAlive-like structure for connections between TCP client/server",
+  "main": "index.js",
+  "scripts": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jasonkuhrt/tcp-ping-pong.git"
+  },
+  "keywords": [
+    "keep-alive",
+    "KeepAlive",
+    "ping-pong",
+    "connection",
+    "tcp",
+    "socket",
+    "pulse",
+    "heartbeat"
+  ],
+  "author": "Jason Kuhrt <jasonkuhrt@me.com> (http://jasonkuhrt.com/)",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/jasonkuhrt/tcp-ping-pong/issues"
+  },
+  "dependencies": {
+    "debug": "~0.7.4"
+  }
+}
