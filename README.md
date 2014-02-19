@@ -1,6 +1,6 @@
-# tcp-ping-pong
+# ping-pong
 
-Programmable KeepAlive-like structure for connections between TCP client/server.
+Low level KeepAlive-like structure exposed as an event emitter.
 
 ping-pong is an application-layer KeepAlive-like system. Unlike
 KeepAlive its activity can be logged, is locally configurable,
