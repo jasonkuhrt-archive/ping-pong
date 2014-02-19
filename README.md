@@ -1,4 +1,5 @@
-# ping-pong [![Code Climate](https://codeclimate.com/github/jasonkuhrt/ping-pong.png)](https://codeclimate.com/github/jasonkuhrt/ping-pong)
+# ping-pong [![Code Climate](https://codeclimate.com/github/jasonkuhrt/ping-pong.png)](https://codeclimate.com/github/jasonkuhrt/ping-pong) [![Dependency Status](https://gemnasium.com/jasonkuhrt/ping-pong.png)](https://gemnasium.com/jasonkuhrt/ping-pong)
+
 
 Low level KeepAlive-like structure exposed as an event emitter.
 
