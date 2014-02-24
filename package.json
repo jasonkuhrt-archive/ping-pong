@@ -4,7 +4,8 @@
   "description": "Low level KeepAlive-like structure exposed as an event emitter.",
   "main": "index.js",
   "scripts": {
-  },
+    "test": "DEBUG=ping-pong tap ./test"
+    },
   "repository": {
     "type": "git",
     "url": "git://github.com/jasonkuhrt/ping-pong.git"
@@ -24,5 +25,8 @@
   },
   "dependencies": {
     "debug": "~0.7.4"
+  },
+  "devDependencies": {
+    "tap": "~0.4.8"
   }
 }
