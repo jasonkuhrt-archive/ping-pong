@@ -1,114 +1,93 @@
 'use strict';
 var log = require('debug')('ping-pong');
+var EventEmitter = require('events').EventEmitter;
 
 
 
-exports.start = function ping_pong_start(socket, ping_interval_s, ping_max_trys){
-  log('start');
-  var is_externally_disconnected = false;
-  var try_count = 1;
-  function handle_external_disconnect(){
-     log('external_disconnect');
-     stop_ping_round();
-     is_externally_disconnected = true;
-  }
-  function handle_ping_result(err, is_pong_catch){
-    if (err) return socket.emit('error', err);
-    if (is_externally_disconnected) return;
+function PingPong(intervalMs, retryLimit, doPing){
+  if (typeof intervalMs !== 'number' || intervalMs < 0) throw new Error('intervalMs must be an integer >= 0 but was:' + retryLimit);
+  if (typeof retryLimit !== 'number' || retryLimit < 0) throw new Error('retryLimit must be an integer >= 0 but was:' + retryLimit);
 
-    if (is_pong_catch) {
-       socket.emit('pong', try_count);
-       try_count = 1;
-       stop_ping_round = ping(ping_interval_s, socket, try_count, handle_ping_result);
-     } else if (try_count === ping_max_trys) {
-       socket.removeListener('close', handle_external_disconnect);
-       max_trys_disconnect(socket, noop);
-     } else {
-       log('ping unanswered');
-       socket.emit('pingMiss', try_count);
-       try_count = try_count + 1;
-       stop_ping_round = ping(ping_interval_s, socket, try_count, handle_ping_result);
-     }
-  }
-  var stop_ping_round = ping(ping_interval_s, socket, try_count, handle_ping_result);
-  socket.once('close', handle_external_disconnect);
-};
+  // Create a bout object that will be
+  // an event emitter with addition properties
+  // for state and configuration settings.
+  var bout = Object.create(new EventEmitter());
 
+  bout.doPing = doPing;
 
-
-function ping(ping_interval_s, socket, try_count, cb){
-  log('ping');
-  var timer;
-  socket.write({cmd:'ping', value:try_count}, function(err){
-    if (err) return cb(err);
-    timer = catch_pong(ping_interval_s, socket, try_count, cb);
-  });
-  // return a killswitch for the timer
-  return function(){
-    return clearTimeout(timer);
+  bout.conf = {
+    intervalMs: intervalMs,
+    retryLimit: retryLimit
   };
+
+  bout.state = {
+    retryCount: 0,
+    retryCountdown: undefined
+  };
+
+  return bout;
+}
+
+
+function start(bout){
+  log('start %j', bout.conf);
+  bout.state.retryCountdown = setInterval(function(){
+    log('!< drop (ping not answered)');
+    _retry(bout);
+  }, bout.conf.intervalMs);
+  return _ping(bout);
+}
+
+
+function catchPong(bout){
+  log('< pong (ping answered)');
+  return _reset(bout);
+}
+
+
+function stop(bout){
+  log('stop');
+  clearInterval(bout.state.retryCountdown);
+  _reset(bout);
+  return bout;
 }
 
 
 
-// Listen to given socket's data for a
-// specific pong until interval is reached.
-// Callback with flag indicating if said pong
-// occured.
-function catch_pong(timeout_s, socket, try_count, cb){
-  var is_pong_catch = false;
-  function capture_match(msg){
-    if (is_pings_pong(try_count, msg)) {
-      log('ping answered');
-      is_pong_catch = true;
-      socket.removeListener('data', capture_match);
-    }
+// Private Functions
+
+function _reset(bout){
+  bout.state.retryCount = 0;
+  return bout;
+}
+
+
+function _retry(bout){
+  bout.state.retryCount += 1;
+  if (bout.state.retryCount > bout.conf.retryLimit){
+    log('retry limit reached');
+    bout.emit('error', _errorRetryLimit(bout));
+    return stop(bout);
+  } else {
+    log('retry %d/%d', bout.state.retryCount, bout.conf.retryLimit);
+    return _ping(bout);
   }
-  function do_timeout(){
-    do_end(is_pong_catch);
-  }
-  function do_end(is_catch){
-    socket.removeListener('data', capture_match);
-    clearTimeout(capture_match_timeout);
-    cb(null, is_catch);
-  }
-  var capture_match_timeout = setTimeout(do_timeout, s_to_ms(timeout_s));
-  socket.addListener('data', capture_match);
 }
 
-function max_trys_disconnect(socket, cb){
-  log('max_trys_disconnect');
-  socket.emit('pingMaxTrysReached');
-  kill_socket(socket, cb);
+
+function _ping(bout){
+  log('> ping');
+  bout.doPing();
+  return bout;
+}
+
+function _errorRetryLimit(bout){
+  return new Error('ping-pong retry limit of '+bout.conf.retryLimit+' reached');
 }
 
 
 
-
-
-
-// Domain Helpers
-
-function s_to_ms(s){
-  return s * 1000;
-}
-
-function is_pings_pong(try_count, o){
-  return o['data'] === 'pong' && o['value'] === try_count;
-}
-
-function kill_socket(socket, cb){
-  socket.once('close', returns_to_async(cb));
-  socket.destroy();
-}
-
-function returns_to_async(cb){
-  return 'function' !== typeof cb ?
-    noop :
-    function do_returns_to_async(){
-      var cb_args = [null].concat(Array.prototype.slice.apply(arguments));
-      return cb.apply(null, cb_args);
-    } ;
-}
-
-function noop(){}
+module.exports = PingPong;
+module.exports.start = start;
+module.exports.stop = stop;
+module.exports.catchPong = catchPong;
