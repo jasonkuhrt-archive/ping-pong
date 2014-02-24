@@ -7,67 +7,59 @@ var EventEmitter = require('events').EventEmitter;
 function PingPong(intervalMs, retryLimit, doPing){
   if (typeof intervalMs !== 'number' || intervalMs < 0) throw new Error('intervalMs must be an integer >= 0 but was:' + retryLimit);
   if (typeof retryLimit !== 'number' || retryLimit < 0) throw new Error('retryLimit must be an integer >= 0 but was:' + retryLimit);
-
   // Create a bout object that will be
   // an event emitter with addition properties
   // for state and configuration settings.
   var bout = Object.create(new EventEmitter());
-
   bout.doPing = doPing;
-
   bout.conf = {
     intervalMs: intervalMs,
     retryLimit: retryLimit
   };
-
   bout.state = {
     retryCount: 0,
     retryCountdown: undefined
   };
-
   return bout;
 }
 
-
 function start(bout){
   log('start %j', bout.conf);
-  return _start(bout);
+  return _startRetryCountdown(bout);
 }
-
 
 function stop(bout){
   log('stop');
-  return _stop(bout);
+  return _stopRetryCountdown(bout);
 }
-
 
 function catchPong(bout){
   log('< pong (ping answered)');
-  _stop(bout);
-  return _start(bout);
+  return _resetRetryCountdown(bout);
 }
-
-
-
 
 
 
 // Private Functions
-function _stop(bout){
+
+function _resetRetryCountdown(bout){
+  _stopRetryCountdown(bout);
+  _startRetryCountdown(bout);
+  return bout;
+}
+
+function _stopRetryCountdown(bout){
   bout.state.retryCountdown = clearInterval(bout.state.retryCountdown);
   bout.state.retryCount = 0;
   return bout;
 }
 
-
-function _start(bout){
-  bout.state.retryCountdown = setInterval(
-    _retry, bout.conf.intervalMs, bout);
+function _startRetryCountdown(bout){
+  bout.state.retryCountdown = setInterval(_doRetry, bout.conf.intervalMs, bout);
   return _ping(bout);
 }
 
-
-function _retry(bout){
+function _doRetry(bout){
   log('... drop (ping not answered)');
   bout.state.retryCount += 1;
   if (bout.state.retryCount > bout.conf.retryLimit){
@@ -80,7 +72,6 @@ function _retry(bout){
   }
 }
 
-
 function _ping(bout){
   log('> ping');
   bout.doPing(bout.state.retryCount);
@@ -88,7 +79,7 @@ function _ping(bout){
 }
 
 function _errorRetryLimit(bout){
-  return new Error('ping-pong retry limit of '+bout.conf.retryLimit+' reached');
+  return new Error('ping-pong retry limit of '+ bout.conf.retryLimit +' reached');
 }
 
 
