@@ -31,38 +31,44 @@ function PingPong(intervalMs, retryLimit, doPing){
 
 function start(bout){
   log('start %j', bout.conf);
-  bout.state.retryCountdown = setInterval(function(){
-    log('!< drop (ping not answered)');
-    _retry(bout);
-  }, bout.conf.intervalMs);
-  return _ping(bout);
-}
-
-
-function catchPong(bout){
-  log('< pong (ping answered)');
-  return _reset(bout);
+  return _start(bout);
 }
 
 
 function stop(bout){
   log('stop');
-  clearInterval(bout.state.retryCountdown);
-  _reset(bout);
-  return bout;
+  return _stop(bout);
+}
+
+
+function catchPong(bout){
+  log('< pong (ping answered)');
+  _stop(bout);
+  return _start(bout);
 }
 
 
 
-// Private Functions
 
-function _reset(bout){
+
+
+// Private Functions
+function _stop(bout){
+  bout.state.retryCountdown = clearInterval(bout.state.retryCountdown);
   bout.state.retryCount = 0;
   return bout;
 }
 
 
+function _start(bout){
+  bout.state.retryCountdown = setInterval(
+    _retry, bout.conf.intervalMs, bout);
+  return _ping(bout);
+}
+
+
 function _retry(bout){
+  log('... drop (ping not answered)');
   bout.state.retryCount += 1;
   if (bout.state.retryCount > bout.conf.retryLimit){
     log('retry limit reached');
@@ -77,7 +83,7 @@ function _retry(bout){
 
 function _ping(bout){
   log('> ping');
-  bout.doPing();
+  bout.doPing(bout.state.retryCount);
   return bout;
 }
 
