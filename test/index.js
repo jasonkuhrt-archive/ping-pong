@@ -10,14 +10,29 @@ describe('ping-pong', function(){
   var edgeCases = [[0,0],[0,1],[1,0]];
   var fuzCases = accumulate(10, function(){ return [random(0, 1), random(0, 19)]; });
 
-  describe('catchPong keeps the bout going', function(){
-    it(argsString([0,1]), test_catch(0,1));
-    it(argsString([5,100]), test_catch(0,1));
-  });
-
   it('start(bout) starts the bout', test_start());
 
   it('stop(bout) aborts the bout', test_stop());
+
+  describe('catchPong(bout)', function(){
+    it('keeps the bout going', test_catch(1, 6));
+
+    it('after invocation the bout\'s current interval completes before doing another ping', function(done){
+      function finish(spamInterval){
+        clearInterval(spamInterval);
+        pp.stop(bout);
+        a.equal(roundCount.numNow, expectedRounds);
+        done();
+      }
+      var roundCount = roundCounter(0);
+      var intervalMs = 10;
+      var expectedRounds = 2;
+      var bout = pp(intervalMs, 3, roundCount);
+      var spam = setInterval(pp.catchPong, 1, bout);
+      setTimeout(finish, (intervalMs * expectedRounds), spam);
+      pp.start(bout);
+    });
+  });
 
   describe('Before timeout, ping fires once plus retryLimit', function(){
     edgeCases.forEach(function(args){
@@ -31,9 +46,10 @@ describe('ping-pong', function(){
 });
 
 
+
 function test_stop(){
   return function(){
-    var bout = pp(1, 3, function(){
+    var bout = pp(1, 2, function(){
       pp.stop(bout);
       a.equal(bout.state.retryCountdown, undefined);
     });
@@ -44,7 +60,7 @@ function test_stop(){
 
 function test_start(){
   return function(done){
-    var bout = pp(1, 3, function(){});
+    var bout = pp(1, 1, function(){});
     pp.start(bout);
     a(bout.state.retryCountdown);
     bout.on('error', function(){ done(); });
@@ -54,20 +70,20 @@ function test_start(){
 
 function test_catch(intervalMs, retryLimit){
   return function(done){
-    var doRoundsCount = 3;
-    var roundsCount = counter(0);
-    var retryCountChecker = counter(0);
+    var doRoundsCount = 2;
+    var expectedRoundsCount = roundCounter(0);
+    var retryCountChecker = roundCounter(0);
     var bout = pp(intervalMs, retryLimit, function(retryCountNow){
-      // Check the retry counter
+      // Check the retry roundCounter
       a.equal(retryCountNow, retryCountChecker.numNow);
       retryCountChecker();
       if (retryCountNow === retryLimit) {
         // Catch pong at every retry limit
         // and reset the retry checker.
-        retryCountChecker = counter(0);
+        retryCountChecker = roundCounter(0);
         pp.catchPong(bout);
-        // Stop when we've reached specified round count.
-        if (roundsCount() === doRoundsCount) {
+        // Stop when we've reached specified round roundCount.
+        if (expectedRoundsCount() === doRoundsCount) {
           pp.stop(bout);
           done();
         }
@@ -80,10 +96,10 @@ function test_catch(intervalMs, retryLimit){
 
 function test_ping_times(intervalMs, retryLimit){
   return function(done){
-    var count = counter(0);
-    var bout = pp(intervalMs, retryLimit, count);
+    var roundCount = roundCounter(0);
+    var bout = pp(intervalMs, retryLimit, roundCount);
     bout.once('error', function(){
-      a.equal(count.numNow, retryLimit + 1);
+      a.equal(roundCount.numNow, retryLimit + 1);
       done();
     });
     pp.start(bout);
@@ -111,11 +127,11 @@ function accumulate(times, f){
   return acc;
 }
 
-function counter(startingNum){
-  function count(){
-    return count.numNow += 1;
+function roundCounter(startingNum){
+  function roundCount(){
+    return roundCount.numNow += 1;
   }
-  count.startingNum = startingNum;
-  count.numNow = startingNum;
-  return count;
+  roundCount.startingNum = startingNum;
+  roundCount.numNow = startingNum;
+  return roundCount;
 }
