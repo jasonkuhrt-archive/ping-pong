@@ -1,7 +1,7 @@
 {
   "name": "ping-pong",
   "version": "0.0.0",
-  "description": "Low level KeepAlive-like structure exposed as an event emitter.",
+  "description": "Low level and abstract KeepAlive-like structure.",
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/.bin/mocha --reporter spec ./test",

@@ -33,7 +33,7 @@ var counter = require('./lib/counter');
 //  invoked for your side-affect and accordingly
 //  ping-pong ignores its return value.
 //
-function IntervalTimeout(intervalMs, retryLimit, ping, onTimeout){
+function PingPong(intervalMs, retryLimit, ping, onTimeout){
   if (typeof intervalMs !== 'number' || intervalMs < 0) throw new Error('intervalMs must be an integer >= 0 but was:' + intervalMs);
   if (typeof retryLimit !== 'number' || retryLimit < 0) throw new Error('retryLimit must be an integer >= 0 but was:' + retryLimit);
   // Create a timer object that will be
@@ -50,9 +50,9 @@ function IntervalTimeout(intervalMs, retryLimit, ping, onTimeout){
     intervalTimer: undefined,
     receivedPong: false,
     retryCounter: counter(retryLimit),
-    // keep track of how many consecutive
-    // pongs have come through. This information
-    // is only kept for potential use by users.
+    // Track total consecutive ponged pings.
+    // PingPong does not rely on this datum,
+    // but maybe useful information for users.
     roundsCounter: counter(0)
   };
   // Its possible that given a very small
@@ -132,6 +132,6 @@ function _pingRetry(timer){
 
 
 
-module.exports = IntervalTimeout;
+module.exports = PingPong;
 module.exports.clear = clear;
 module.exports.pong = pong;

@@ -11,7 +11,7 @@ describe('ping-pong', function(){
   var edgeCases = [[0,0],[0,1],[1,0]];
   var fuzCases = accumulate(10, function(){ return [random(0, 1), random(0, 19)]; });
 
-  it('clear(timer) aborts the timer', test_clear());
+  it('clear(timer) stops the timer', test_clear());
 
   describe('pong(timer)', function(){
     it('keeps the timer going', test_catch(1, 6));
