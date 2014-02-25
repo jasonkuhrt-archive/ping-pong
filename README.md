@@ -6,3 +6,32 @@ Low level KeepAlive-like structure exposed as an event emitter.
 ping-pong is an application-layer KeepAlive-like system. Unlike
 KeepAlive its activity can be logged, is locally configurable,
 and exposes an api for applications to integrate as-needed.
+
+## Installation
+```
+npm install ping-pong
+```
+
+## API
+
+See source code for more details and parameter explaination.
+
+#### PingPong
+```
+a, b, c Int: a, b, (c -> *) -> timer
+```
+
+#### start
+```
+a timer: a -> a
+```
+
+#### stop
+```
+a timer: a -> a
+```
+
+#### catchPong
+```
+a timer: a -> a
+```
