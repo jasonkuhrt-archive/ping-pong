@@ -18,20 +18,15 @@ See source code for more details and parameter explaination.
 
 #### PingPong
 ```
-a, b, c Int: a, b, (c -> *) -> timer
+a, b, c, d, e Int: a, b, (c, d -> *), (e, d -> *) -> timer
 ```
 
-#### start
+#### pong
 ```
 a timer: a -> a
 ```
 
-#### stop
-```
-a timer: a -> a
-```
-
-#### catchPong
+#### clear
 ```
 a timer: a -> a
 ```
