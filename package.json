@@ -16,6 +16,9 @@
     "KeepAlive",
     "ping-pong",
     "connection",
+    "timer",
+    "timeout",
+    "interval",
     "pulse",
     "heartbeat"
   ],
