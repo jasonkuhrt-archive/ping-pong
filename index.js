@@ -72,7 +72,7 @@ function PingPong(intervalMs, retryLimit, ping, onTimeout){
 //  a timer: a -> a
 //
 function clear(timer){
-  log('clear');
+  log('stop');
   timer.state.intervalTimer = clearInterval(timer.state.intervalTimer);
   timer.state.retryCounter.reset();
   return timer;

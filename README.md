@@ -26,3 +26,22 @@ a timer: a -> a
 ```
 a timer: a -> a
 ```
+
+
+## Debug Mode
+
+Uses [`debug`](https://github.com/visionmedia/debug), e.g.:
+
+```
+DEBUG=ping-pong node foo.js
+
+ping-pong start {"intervalMs":10,"retryLimit":0} +1ms
+ping-pong > ping +0ms
+ping-pong < pong +1ms
+ping-pong > ping +10ms
+ping-pong < pong +0ms
+ping-pong > ping +10ms
+ping-pong drop +11ms
+ping-pong retry limit reached +0ms
+ping-pong stop +0ms
+```
