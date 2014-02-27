@@ -4,7 +4,8 @@
   "description": "Low level and abstract KeepAlive-like structure.",
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/mocha --reporter spec ./test",
+    "test": "./node_modules/.bin/mocha ./test --reporter spec",
+    "dev": "./node_modules/.bin/mocha ./test --reporter spec --watch ",
     "test-debug": "DEBUG=ping-pong npm test"
   },
   "repository": {
@@ -28,7 +29,8 @@
     "url": "https://github.com/jasonkuhrt/ping-pong/issues"
   },
   "dependencies": {
-    "debug": "~0.7.4"
+    "debug": "~0.7.4",
+    "jasonkuhrt-counter": "0.0.1"
   },
   "devDependencies": {
     "mocha": "~1.17.1"

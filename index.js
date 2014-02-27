@@ -1,6 +1,6 @@
 'use strict';
 var log = require('debug')('ping-pong');
-var counter = require('./lib/counter');
+var Counter = require('counter');
 
 
 
@@ -49,11 +49,7 @@ function PingPong(intervalMs, retryLimit, ping, onTimeout){
   timer.state = {
     intervalTimer: undefined,
     receivedPong: false,
-    retryCounter: counter(retryLimit),
-    // Track total consecutive ponged pings.
-    // PingPong does not rely on this datum,
-    // but maybe useful information for users.
-    roundsCounter: counter(0)
+    retryCounter: Counter(retryLimit),
   };
   // Its possible that given a very small
   // intervalMs (0 for example) that the
@@ -74,7 +70,7 @@ function PingPong(intervalMs, retryLimit, ping, onTimeout){
 function clear(timer){
   log('stop');
   timer.state.intervalTimer = clearInterval(timer.state.intervalTimer);
-  timer.state.retryCounter.reset();
+  timer.state.retryCounter.clear();
   return timer;
 }
 
@@ -82,7 +78,7 @@ function clear(timer){
 //  a timer: a -> a
 //
 //  Notify ping that its pong has arrived.
-//  This restarts the retry counter thus
+//  This restarts the retry Counter thus
 //  ensuring that the session continues on
 //  the next interval. Calling pong
 //  more than once per interval is noop.
@@ -92,7 +88,6 @@ function pong(timer){
     log('< pong');
     timer.state.receivedPong = true;
     timer.state.retryCounter.reset();
-    timer.state.roundsCounter(1);
   }
   return timer;
 }
@@ -114,15 +109,16 @@ function _onInterval(timer){
 function _ping(timer){
   log('> ping');
   timer.state.receivedPong = false;
-  timer.conf.ping(timer.state.retryCounter.now, timer.conf.retryLimit);
+  timer.conf.ping(timer.state.retryCounter.value(), timer.conf.retryLimit);
   return timer;
 }
 
 function _pingRetry(timer){
   log('drop');
-  if (timer.state.retryCounter(-1) === -1) {
+  if (timer.state.retryCounter.dec().value() === -1) {
     log('retry limit reached');
-    timer.conf.onTimeout(timer.state.roundsCounter.now, timer.conf.retryLimit);
+    var rounds_count = timer.state.retryCounter.state.resets.length;
+    timer.conf.onTimeout(rounds_count, timer.conf.retryLimit);
     return clear(timer);
   } else {
     log('retry %d/%d', timer.conf.retryLimit - timer.state.retryCounter.now, timer.conf.retryLimit);

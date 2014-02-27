@@ -2,7 +2,7 @@
 'use strict';
 var util = require('util');
 var a = require('assert');
-var counter = require('../lib/counter');
+var Counter = require('jasonkuhrt-counter');
 var pp = require('../');
 
 
@@ -19,15 +19,15 @@ describe('ping-pong', function(){
     it('after invocation the timer\'s current interval completes before doing another ping', function(done){
       function onTimeout(ronudsCompleted){
         a.equal(ronudsCompleted, expectedRounds);
-        // counter should be 3 because after two rounds
+        // Counter should be 3 because after two rounds
         // invoked once more until failure.
-        a.equal(count.now - 1, expectedRounds);
+        a.equal(count.value() - 1, expectedRounds);
         done();
       }
-      var count = counter(0);
+      var count = Counter(0);
       var intervalMs = 10;
       var expectedRounds = 2;
-      var timer = pp(intervalMs, 0, function(){ count(1); }, onTimeout);
+      var timer = pp(intervalMs, 0, count.inc, onTimeout);
       var spam = setInterval(pp.pong, 1, timer);
       setTimeout(clearInterval, (intervalMs * expectedRounds), spam);
     });
@@ -59,9 +59,9 @@ function test_clear(){
 function test_catch(intervalMs, retryLimit){
   return function(done){
     var doRoundsCount = 2;
-    var expectedRoundsCount = counter(0);
+    var expectedRoundsCount = Counter(0);
     var timer = pp(intervalMs, retryLimit, function(retriesLeft){
-      // Check the retry counter
+      // Check the retry Counter
       //console.log(retriesLeft);
       a.equal(retriesLeft - 1, --retryLimit);
       if (!retriesLeft) {
@@ -70,7 +70,7 @@ function test_catch(intervalMs, retryLimit){
         retryLimit = timer.conf.retryLimit;
         pp.pong(timer);
         // Stop when we've reached specified round count.
-        if (expectedRoundsCount(1) === doRoundsCount) {
+        if (expectedRoundsCount.inc().value() === doRoundsCount) {
           pp.clear(timer);
           done();
         }
@@ -82,12 +82,12 @@ function test_catch(intervalMs, retryLimit){
 
 function test_ping_times(intervalMs, retryLimit){
   return function(done){
-    var count = counter(0);
+    var count = Counter(0);
     function onTimeout(rounds, retryLimit){
-      a.equal(count.now, retryLimit + 1);
+      a.equal(count.value(), retryLimit + 1);
       done();
     }
-    pp(intervalMs, retryLimit, function(){ count(1); }, onTimeout);
+    pp(intervalMs, retryLimit, count.inc, onTimeout);
   };
 }
 
@@ -97,6 +97,12 @@ function test_ping_times(intervalMs, retryLimit){
 
 
 // Domain Helpers
+
+function noargs(f){
+  return function(){
+    return f();
+  };
+}
 
 function argsString(args){
   return util.format('intervalMs: %j, retryLimit: %j', args[0], args[1]);
