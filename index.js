@@ -1,6 +1,6 @@
 'use strict';
 var log = require('debug')('ping-pong');
-var Counter = require('counter');
+var Counter = require('jasonkuhrt-counter');
 
 
 
