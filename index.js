@@ -50,6 +50,7 @@ function PingPong(intervalMs, retryLimit, ping, onTimeout){
     intervalTimer: undefined,
     receivedPong: false,
     retryCounter: Counter(retryLimit),
+    roundsCount: 0
   };
   // Its possible that given a very small
   // intervalMs (0 for example) that the
@@ -88,6 +89,7 @@ function pong(timer){
     log('< pong');
     timer.state.receivedPong = true;
     timer.state.retryCounter.reset();
+    timer.state.roundsCount++;
   }
   return timer;
 }
@@ -115,13 +117,13 @@ function _ping(timer){
 
 function _pingRetry(timer){
   log('drop');
-  if (timer.state.retryCounter.dec().value() === -1) {
+  var retryCounter = timer.state.retryCounter;
+  if (retryCounter.dec().value() === -1) {
     log('retry limit reached');
-    var rounds_count = timer.state.retryCounter.state.resets.length;
-    timer.conf.onTimeout(rounds_count, timer.conf.retryLimit);
+    timer.conf.onTimeout(timer.state.roundsCount, timer.conf.retryLimit);
     return clear(timer);
   } else {
-    log('retry %d/%d', timer.conf.retryLimit - timer.state.retryCounter.now, timer.conf.retryLimit);
+    log('retry %d/%d', timer.conf.retryLimit - retryCounter.value(), timer.conf.retryLimit);
     return _ping(timer);
   }
 }
